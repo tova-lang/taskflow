@@ -1,0 +1,15 @@
+[project]
+name = "taskflow"
+version = "0.1.0"
+description = "Professional task management app built with Tova"
+entry = "src"
+
+[build]
+output = ".tova-out"
+
+[dev]
+port = 3000
+
+[dependencies]
+
+[npm]

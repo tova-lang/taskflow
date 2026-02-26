@@ -1,0 +1,188 @@
+// TaskFlow — Server: Database, Models, CRUD & Routes
+
+server {
+  db {
+    driver: "sqlite"
+    path: "taskflow.db"
+  }
+
+  model Project {
+    name: String
+    color: String
+    icon: String
+    created_at: String
+  }
+
+  model Task {
+    project_id: Int
+    title: String
+    description: String
+    status: String
+    priority: String
+    due_date: String
+    created_at: String
+    completed_at: String
+  }
+
+  // ── Projects ─────────────────────────────────────────
+
+  fn list_projects() -> [Project] {
+    Project.all()
+  }
+
+  fn create_project(name: String, color: String, icon: String) -> Project {
+    Project.create({
+      name: name,
+      color: color,
+      icon: icon,
+      created_at: Date.new().toISOString()
+    })
+  }
+
+  fn update_project(id: Int, name: String, color: String, icon: String) {
+    proj = Project.find(id)
+    guard proj != nil else { return nil }
+    Project.update(id, {
+      name: name,
+      color: color,
+      icon: icon
+    })
+    Project.find(id)
+  }
+
+  fn delete_project(id: Int) {
+    proj = Project.find(id)
+    guard proj != nil else { return false }
+    project_tasks = Task.where({ project_id: id })
+    for t in project_tasks {
+      Task.delete(t.id)
+    }
+    Project.delete(id)
+    true
+  }
+
+  // ── Tasks ────────────────────────────────────────────
+
+  fn list_tasks() -> [Task] {
+    Task.all()
+  }
+
+  fn create_task(project_id: Int, title: String, description: String, status: String, priority: String, due_date: String) -> Task {
+    Task.create({
+      project_id: project_id,
+      title: title,
+      description: description,
+      status: status,
+      priority: priority,
+      due_date: due_date,
+      created_at: Date.new().toISOString(),
+      completed_at: ""
+    })
+  }
+
+  fn update_task(id: Int, project_id: Int, title: String, description: String, status: String, priority: String, due_date: String) {
+    task = Task.find(id)
+    guard task != nil else { return nil }
+    var completed = ""
+    if status == "done" and task.status != "done" {
+      completed = Date.new().toISOString()
+    } elif status == "done" and task.completed_at != "" {
+      completed = task.completed_at
+    }
+    Task.update(id, {
+      project_id: project_id,
+      title: title,
+      description: description,
+      status: status,
+      priority: priority,
+      due_date: due_date,
+      completed_at: completed
+    })
+    Task.find(id)
+  }
+
+  fn update_task_status(id: Int, status: String) {
+    task = Task.find(id)
+    guard task != nil else { return nil }
+    var completed = ""
+    if status == "done" and task.status != "done" {
+      completed = Date.new().toISOString()
+    } elif status == "done" and task.completed_at != "" {
+      completed = task.completed_at
+    }
+    Task.update(id, {
+      status: status,
+      completed_at: completed
+    })
+    Task.find(id)
+  }
+
+  fn delete_task(id: Int) {
+    task = Task.find(id)
+    guard task != nil else { return false }
+    Task.delete(id)
+    true
+  }
+
+  fn delete_completed_tasks() {
+    completed = Task.where({ status: "done" })
+    for t in completed {
+      Task.delete(t.id)
+    }
+    true
+  }
+
+  fn mark_all_done(project_id: Int) {
+    project_tasks = Task.where({ project_id: project_id })
+    now = Date.new().toISOString()
+    for t in project_tasks {
+      if t.status != "done" {
+        Task.update(t.id, {
+          status: "done",
+          completed_at: now
+        })
+      }
+    }
+    true
+  }
+
+  fn get_stats() {
+    all_tasks = Task.all()
+    total_val = len(all_tasks)
+    backlog_val = len([t for t in all_tasks if t.status == "backlog"])
+    todo_val = len([t for t in all_tasks if t.status == "todo"])
+    in_progress_val = len([t for t in all_tasks if t.status == "in_progress"])
+    done_val = len([t for t in all_tasks if t.status == "done"])
+    high_val = len([t for t in all_tasks if t.priority == "high" or t.priority == "urgent"])
+    urgent_val = len([t for t in all_tasks if t.priority == "urgent"])
+    now = Date.new().toISOString()
+    overdue_val = len([t for t in all_tasks if t.due_date != "" and t.due_date < now and t.status != "done"])
+    {
+      total: total_val,
+      backlog: backlog_val,
+      todo: todo_val,
+      in_progress: in_progress_val,
+      done: done_val,
+      high: high_val,
+      urgent: urgent_val,
+      overdue: overdue_val
+    }
+  }
+
+  // ── Routes ───────────────────────────────────────────
+
+  route GET    "/api/projects"            => list_projects
+  route POST   "/api/projects"            => create_project
+  route PUT    "/api/projects/:id"        => update_project
+  route DELETE "/api/projects/:id"        => delete_project
+
+  route GET    "/api/tasks"               => list_tasks
+  route POST   "/api/tasks"               => create_task
+  route PUT    "/api/tasks/:id"           => update_task
+  route PUT    "/api/task-status/:id"     => update_task_status
+  route DELETE "/api/tasks/:id"           => delete_task
+  route DELETE "/api/tasks/completed"     => delete_completed_tasks
+  route POST   "/api/tasks/mark-done"     => mark_all_done
+
+  route GET    "/api/stats"               => get_stats
+}

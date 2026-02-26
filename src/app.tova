@@ -1,0 +1,697 @@
+// TaskFlow — Shared Types & Browser UI
+
+browser {
+  // ── Data State ───────────────────────────────────────
+  state projects = []
+  state tasks = []
+  state stats = { total: 0, backlog: 0, todo: 0, in_progress: 0, done: 0, high: 0, urgent: 0, overdue: 0 }
+
+  // ── Navigation ───────────────────────────────────────
+  state current_view = "dashboard"
+  state current_project_id = 0
+
+  // ── Filters ──────────────────────────────────────────
+  state search_query = ""
+  state filter_status = "all"
+  state filter_priority = "all"
+  state sort_by = "newest"
+
+  // ── Task Form ────────────────────────────────────────
+  state show_task_form = false
+  state editing_task_id = 0
+  state form_title = ""
+  state form_description = ""
+  state form_status = "todo"
+  state form_priority = "medium"
+  state form_project_id = 0
+  state form_due_date = ""
+
+  // ── Project Form ─────────────────────────────────────
+  state show_project_form = false
+  state editing_project_id = 0
+  state project_form_name = ""
+  state project_form_color = "#6366f1"
+
+  // ── Load on mount ────────────────────────────────────
+  effect {
+    projects = server.list_projects()
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+
+  fn refresh_all() {
+    projects = server.list_projects()
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+
+  fn refresh_tasks() {
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+
+  // ── Task Form Helpers ────────────────────────────────
+
+  fn reset_task_form() {
+    form_title = ""
+    form_description = ""
+    form_status = "todo"
+    form_priority = "medium"
+    form_project_id = 0
+    form_due_date = ""
+    editing_task_id = 0
+    show_task_form = false
+  }
+
+  fn open_new_task() {
+    reset_task_form()
+    if current_view == "project" and current_project_id > 0 {
+      form_project_id = current_project_id
+    }
+    show_task_form = true
+  }
+
+  fn open_edit_task(task) {
+    form_title = task.title
+    form_description = task.description
+    form_status = task.status
+    form_priority = task.priority
+    form_project_id = task.project_id
+    form_due_date = task.due_date
+    editing_task_id = task.id
+    show_task_form = true
+  }
+
+  fn handle_task_submit() {
+    if form_title != "" {
+      if editing_task_id > 0 {
+        server.update_task(editing_task_id, form_project_id, form_title, form_description, form_status, form_priority, form_due_date)
+      } else {
+        server.create_task(form_project_id, form_title, form_description, form_status, form_priority, form_due_date)
+      }
+      reset_task_form()
+      refresh_tasks()
+    }
+  }
+
+  fn handle_status_toggle(task) {
+    next = match task.status {
+      "backlog" => "todo"
+      "todo" => "in_progress"
+      "in_progress" => "done"
+      "done" => "backlog"
+      _ => "todo"
+    }
+    server.update_task_status(task.id, next)
+    refresh_tasks()
+  }
+
+  fn handle_delete_task(id) {
+    server.delete_task(id)
+    refresh_tasks()
+  }
+
+  fn handle_clear_completed() {
+    server.delete_completed_tasks()
+    refresh_tasks()
+  }
+
+  fn handle_mark_all_done() {
+    if current_project_id > 0 {
+      server.mark_all_done(current_project_id)
+      refresh_tasks()
+    }
+  }
+
+  // ── Project Form Helpers ─────────────────────────────
+
+  fn reset_project_form() {
+    project_form_name = ""
+    project_form_color = "#6366f1"
+    editing_project_id = 0
+    show_project_form = false
+  }
+
+  fn open_new_project() {
+    reset_project_form()
+    show_project_form = true
+  }
+
+  fn open_edit_project(proj) {
+    project_form_name = proj.name
+    project_form_color = proj.color
+    editing_project_id = proj.id
+    show_project_form = true
+  }
+
+  fn handle_project_submit() {
+    if project_form_name != "" {
+      if editing_project_id > 0 {
+        server.update_project(editing_project_id, project_form_name, project_form_color, "")
+      } else {
+        server.create_project(project_form_name, project_form_color, "")
+      }
+      reset_project_form()
+      refresh_all()
+    }
+  }
+
+  fn handle_delete_project(id) {
+    server.delete_project(id)
+    if current_project_id == id {
+      current_view = "dashboard"
+      current_project_id = 0
+    }
+    refresh_all()
+  }
+
+  // ── Navigation ───────────────────────────────────────
+
+  fn navigate_dashboard() {
+    current_view = "dashboard"
+    current_project_id = 0
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  fn navigate_all_tasks() {
+    current_view = "all_tasks"
+    current_project_id = 0
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  fn navigate_project(id) {
+    current_view = "project"
+    current_project_id = id
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  // ── Filtering ────────────────────────────────────────
+
+  fn get_project_name(pid) {
+    for p in projects {
+      if p.id == pid {
+        return p.name
+      }
+    }
+    "No Project"
+  }
+
+  fn get_project_color(pid) {
+    for p in projects {
+      if p.id == pid {
+        return p.color
+      }
+    }
+    "#9ca3af"
+  }
+
+  fn count_project_tasks(pid) {
+    len([t for t in tasks if t.project_id == pid and t.status != "done"])
+  }
+
+  fn is_overdue(task) {
+    if task.due_date == "" or task.status == "done" {
+      return false
+    }
+    today = Date.new().toISOString().slice(0, 10)
+    due = task.due_date
+    due < today
+  }
+
+  fn get_filtered_tasks() {
+    base = if current_view == "project" and current_project_id > 0 {
+      [t for t in tasks if t.project_id == current_project_id]
+    } else {
+      tasks
+    }
+    filtered = if filter_status == "all" {
+      base
+    } elif filter_status == "backlog" {
+      [t for t in base if t.status == "backlog"]
+    } elif filter_status == "todo" {
+      [t for t in base if t.status == "todo"]
+    } elif filter_status == "in_progress" {
+      [t for t in base if t.status == "in_progress"]
+    } elif filter_status == "done" {
+      [t for t in base if t.status == "done"]
+    } else {
+      base
+    }
+    filtered2 = if filter_priority == "all" {
+      filtered
+    } elif filter_priority == "urgent" {
+      [t for t in filtered if t.priority == "urgent"]
+    } elif filter_priority == "high" {
+      [t for t in filtered if t.priority == "high"]
+    } elif filter_priority == "medium" {
+      [t for t in filtered if t.priority == "medium"]
+    } elif filter_priority == "low" {
+      [t for t in filtered if t.priority == "low"]
+    } else {
+      filtered
+    }
+    if search_query == "" {
+      filtered2
+    } else {
+      [t for t in filtered2 if t.title.toLowerCase().includes(search_query.toLowerCase()) or t.description.toLowerCase().includes(search_query.toLowerCase())]
+    }
+  }
+
+  // ── Style Helpers ────────────────────────────────────
+
+  fn status_badge_class(st) {
+    match st {
+      "backlog"     => "bg-gray-100 text-gray-600"
+      "todo"        => "bg-blue-100 text-blue-700"
+      "in_progress" => "bg-amber-100 text-amber-700"
+      "done"        => "bg-green-100 text-green-700"
+      _             => "bg-gray-100 text-gray-600"
+    }
+  }
+
+  fn status_label(st) {
+    match st {
+      "backlog"     => "Backlog"
+      "todo"        => "To Do"
+      "in_progress" => "Active"
+      "done"        => "Done"
+      _             => st
+    }
+  }
+
+  fn priority_badge_class(pr) {
+    match pr {
+      "urgent" => "bg-red-100 text-red-700 border border-red-200"
+      "high"   => "bg-orange-100 text-orange-700 border border-orange-200"
+      "medium" => "bg-amber-100 text-amber-700 border border-amber-200"
+      "low"    => "bg-green-100 text-green-700 border border-green-200"
+      _        => "bg-gray-100 text-gray-600"
+    }
+  }
+
+  fn status_circle_class(st) {
+    match st {
+      "backlog"     => "border-gray-300 hover:border-gray-500"
+      "todo"        => "border-blue-400 hover:border-blue-600"
+      "in_progress" => "border-amber-400 hover:border-amber-600"
+      "done"        => "border-green-500 bg-green-500 hover:bg-green-600"
+      _             => "border-gray-300"
+    }
+  }
+
+  // ── Components ───────────────────────────────────────
+
+  component StatCard(label, value, color_class) {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">"{label}"</p>
+      <p class="text-2xl font-bold mt-1 {color_class}">"{value}"</p>
+    </div>
+  }
+
+  component TaskCard(task) {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all group {if is_overdue(task) { 'border-l-4 border-l-red-400' } else { '' }}">
+      <div class="flex items-start gap-3">
+        <button
+          on:click={fn() handle_status_toggle(task)}
+          class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors {status_circle_class(task.status)}"
+        >
+          if task.status == "done" {
+            <span class="text-white text-xs font-bold">"✓"</span>
+          }
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="font-medium text-gray-900 {if task.status == 'done' { 'line-through text-gray-400' } else { '' }}">"{task.title}"</h3>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {status_badge_class(task.status)}">
+              "{status_label(task.status)}"
+            </span>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {priority_badge_class(task.priority)}">
+              "{task.priority}"
+            </span>
+          </div>
+          if task.description != "" {
+            <p class="text-sm text-gray-500 mt-1">"{task.description}"</p>
+          }
+          <div class="flex items-center gap-3 mt-2">
+            if task.project_id > 0 {
+              <span class="flex items-center gap-1 text-xs text-gray-400">
+                <span class="w-2 h-2 rounded-full inline-block" style="background:{get_project_color(task.project_id)}"></span>
+                "{get_project_name(task.project_id)}"
+              </span>
+            }
+            if task.due_date != "" {
+              <span class="text-xs {if is_overdue(task) { 'text-red-500 font-medium' } else { 'text-gray-400' }}">
+                "{task.due_date}"
+              </span>
+            }
+          </div>
+        </div>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            on:click={fn() open_edit_task(task)}
+            class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm"
+          >"✎"</button>
+          <button
+            on:click={fn() handle_delete_task(task.id)}
+            class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-sm"
+          >"✕"</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  component FilterBar {
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="flex-1 min-w-48">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={search_query}
+          on:input={fn(e) search_query = e.target.value}
+          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+        />
+      </div>
+      <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+        <button on:click={fn() filter_status = "all"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'all' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"All"</button>
+        <button on:click={fn() filter_status = "backlog"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'backlog' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Backlog"</button>
+        <button on:click={fn() filter_status = "todo"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'todo' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"To Do"</button>
+        <button on:click={fn() filter_status = "in_progress"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'in_progress' { 'bg-white text-amber-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Active"</button>
+        <button on:click={fn() filter_status = "done"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'done' { 'bg-white text-green-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Done"</button>
+      </div>
+      <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+        <button on:click={fn() filter_priority = "all"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'all' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Any"</button>
+        <button on:click={fn() filter_priority = "urgent"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'urgent' { 'bg-white text-red-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Urgent"</button>
+        <button on:click={fn() filter_priority = "high"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'high' { 'bg-white text-orange-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"High"</button>
+        <button on:click={fn() filter_priority = "medium"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'medium' { 'bg-white text-amber-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Med"</button>
+        <button on:click={fn() filter_priority = "low"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'low' { 'bg-white text-green-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Low"</button>
+      </div>
+    </div>
+  }
+
+  component Sidebar {
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
+      <div class="p-5 border-b border-gray-100">
+        <h1 class="text-xl font-bold text-gray-900">"TaskFlow"</h1>
+        <p class="text-xs text-gray-400 mt-0.5">"Manage your work"</p>
+      </div>
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <button
+          on:click={navigate_dashboard}
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {if current_view == 'dashboard' { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+        >
+          <span class="text-base">"◫"</span>
+          "Dashboard"
+        </button>
+        <button
+          on:click={navigate_all_tasks}
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {if current_view == 'all_tasks' { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+        >
+          <span class="text-base">"☰"</span>
+          "All Tasks"
+        </button>
+        <div class="pt-4 pb-2 px-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">"Projects"</span>
+            <button
+              on:click={open_new_project}
+              class="text-gray-400 hover:text-indigo-600 text-lg leading-none"
+            >"+"</button>
+          </div>
+        </div>
+        for proj in projects {
+          <div class="flex items-center group">
+            <button
+              on:click={fn() navigate_project(proj.id)}
+              class="flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors {if current_view == 'project' and current_project_id == proj.id { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+            >
+              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:{proj.color}"></span>
+              <span class="flex-1 text-left truncate">"{proj.name}"</span>
+              <span class="text-xs text-gray-400">"{count_project_tasks(proj.id)}"</span>
+            </button>
+            <button
+              on:click={fn() open_edit_project(proj)}
+              class="p-1 text-gray-300 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            >"✎"</button>
+            <button
+              on:click={fn() handle_delete_project(proj.id)}
+              class="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+            >"✕"</button>
+          </div>
+        }
+        if len(projects) == 0 {
+          <p class="px-3 py-2 text-xs text-gray-400">"No projects yet"</p>
+        }
+      </nav>
+    </aside>
+  }
+
+  component TaskForm {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" on:click={reset_task_form}>
+      <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl mx-4" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-lg font-semibold text-gray-900 mb-5">
+          if editing_task_id > 0 { "Edit Task" } else { "New Task" }
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Title"</label>
+            <input
+              type="text"
+              placeholder="What needs to be done?"
+              value={form_title}
+              on:input={fn(e) form_title = e.target.value}
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Description"</label>
+            <input
+              type="text"
+              placeholder="Add some details..."
+              value={form_description}
+              on:input={fn(e) form_description = e.target.value}
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">"Project"</label>
+              <select
+                value={form_project_id}
+                on:change={fn(e) form_project_id = to_int(e.target.value)}
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              >
+                <option value="0">"No Project"</option>
+                for proj in projects {
+                  <option value={proj.id}>"{proj.name}"</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">"Due Date"</label>
+              <input
+                type="date"
+                value={form_due_date}
+                on:input={fn(e) form_due_date = e.target.value}
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Status"</label>
+            <div class="flex gap-2">
+              <button on:click={fn() form_status = "backlog"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'backlog' { 'bg-gray-200 text-gray-800 border-gray-300' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Backlog"</button>
+              <button on:click={fn() form_status = "todo"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'todo' { 'bg-blue-100 text-blue-700 border-blue-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"To Do"</button>
+              <button on:click={fn() form_status = "in_progress"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'in_progress' { 'bg-amber-100 text-amber-700 border-amber-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Active"</button>
+              <button on:click={fn() form_status = "done"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'done' { 'bg-green-100 text-green-700 border-green-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Done"</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Priority"</label>
+            <div class="flex gap-2">
+              <button on:click={fn() form_priority = "low"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'low' { 'bg-green-100 text-green-700 border-green-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Low"</button>
+              <button on:click={fn() form_priority = "medium"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'medium' { 'bg-amber-100 text-amber-700 border-amber-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Medium"</button>
+              <button on:click={fn() form_priority = "high"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'high' { 'bg-orange-100 text-orange-700 border-orange-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"High"</button>
+              <button on:click={fn() form_priority = "urgent"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'urgent' { 'bg-red-100 text-red-700 border-red-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Urgent"</button>
+            </div>
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button
+              on:click={handle_task_submit}
+              class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm"
+            >
+              if editing_task_id > 0 { "Update Task" } else { "Add Task" }
+            </button>
+            <button
+              on:click={reset_task_form}
+              class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200"
+            >"Cancel"</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  component ProjectForm {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" on:click={reset_project_form}>
+      <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl mx-4" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-lg font-semibold text-gray-900 mb-5">
+          if editing_project_id > 0 { "Edit Project" } else { "New Project" }
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Name"</label>
+            <input
+              type="text"
+              placeholder="Project name..."
+              value={project_form_name}
+              on:input={fn(e) project_form_name = e.target.value}
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">"Color"</label>
+            <div class="flex gap-2 flex-wrap">
+              <button on:click={fn() project_form_color = "#6366f1"} class="w-8 h-8 rounded-full bg-indigo-500 {if project_form_color == '#6366f1' { 'ring-2 ring-offset-2 ring-indigo-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ef4444"} class="w-8 h-8 rounded-full bg-red-500 {if project_form_color == '#ef4444' { 'ring-2 ring-offset-2 ring-red-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#f59e0b"} class="w-8 h-8 rounded-full bg-amber-500 {if project_form_color == '#f59e0b' { 'ring-2 ring-offset-2 ring-amber-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#22c55e"} class="w-8 h-8 rounded-full bg-green-500 {if project_form_color == '#22c55e' { 'ring-2 ring-offset-2 ring-green-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#3b82f6"} class="w-8 h-8 rounded-full bg-blue-500 {if project_form_color == '#3b82f6' { 'ring-2 ring-offset-2 ring-blue-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ec4899"} class="w-8 h-8 rounded-full bg-pink-500 {if project_form_color == '#ec4899' { 'ring-2 ring-offset-2 ring-pink-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#8b5cf6"} class="w-8 h-8 rounded-full bg-violet-500 {if project_form_color == '#8b5cf6' { 'ring-2 ring-offset-2 ring-violet-500' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#14b8a6"} class="w-8 h-8 rounded-full bg-teal-500 {if project_form_color == '#14b8a6' { 'ring-2 ring-offset-2 ring-teal-500' } else { '' }}"></button>
+            </div>
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button
+              on:click={handle_project_submit}
+              class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm"
+            >
+              if editing_project_id > 0 { "Update" } else { "Create Project" }
+            </button>
+            <button
+              on:click={reset_project_form}
+              class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200"
+            >"Cancel"</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  component DashboardView {
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">"Dashboard"</h2>
+          <p class="text-sm text-gray-500 mt-0.5">"Overview of all your work"</p>
+        </div>
+        <button
+          on:click={open_new_task}
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm text-sm"
+        >"+ New Task"</button>
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Tasks" value={stats.total} color_class="text-gray-900" />
+        <StatCard label="In Progress" value={stats.in_progress} color_class="text-amber-600" />
+        <StatCard label="Completed" value={stats.done} color_class="text-green-600" />
+        <StatCard label="Overdue" value={stats.overdue} color_class="text-red-600" />
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-8">
+        <StatCard label="Backlog" value={stats.backlog} color_class="text-gray-500" />
+        <StatCard label="To Do" value={stats.todo} color_class="text-blue-600" />
+        <StatCard label="High Priority" value={stats.high} color_class="text-orange-600" />
+        <StatCard label="Urgent" value={stats.urgent} color_class="text-red-600" />
+      </div>
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">"Recent Tasks"</h3>
+      </div>
+      for task in tasks.slice(0, 5) {
+        <div class="mb-3">
+          <TaskCard task={task} />
+        </div>
+      }
+      if len(tasks) == 0 {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-100">
+          <p class="text-gray-400 text-sm">"No tasks yet. Create your first task to get started."</p>
+        </div>
+      }
+    </div>
+  }
+
+  component TaskListView {
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          if current_view == "project" and current_project_id > 0 {
+            <h2 class="text-2xl font-bold text-gray-900">"{get_project_name(current_project_id)}"</h2>
+          } else {
+            <h2 class="text-2xl font-bold text-gray-900">"All Tasks"</h2>
+          }
+          <p class="text-sm text-gray-500 mt-0.5">"{len(get_filtered_tasks())} tasks"</p>
+        </div>
+        <div class="flex gap-2">
+          if current_view == "project" and current_project_id > 0 {
+            <button
+              on:click={handle_mark_all_done}
+              class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200 text-sm"
+            >"Mark All Done"</button>
+          }
+          <button
+            on:click={open_new_task}
+            class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm text-sm"
+          >"+ New Task"</button>
+        </div>
+      </div>
+
+      <FilterBar />
+
+      for task in get_filtered_tasks() {
+        <div class="mb-3">
+          <TaskCard task={task} />
+        </div>
+      }
+
+      if len(get_filtered_tasks()) == 0 {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-100">
+          <p class="text-gray-400 text-sm">"No tasks match your filters."</p>
+        </div>
+      }
+
+      if stats.done > 0 {
+        <div class="mt-6 text-center">
+          <button
+            on:click={handle_clear_completed}
+            class="text-sm text-red-500 hover:text-red-700 font-medium"
+          >"Clear completed tasks"</button>
+        </div>
+      }
+    </div>
+  }
+
+  component App {
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+      <Sidebar />
+      <main class="ml-64 p-8">
+        <div class="max-w-4xl mx-auto">
+          if current_view == "dashboard" {
+            <DashboardView />
+          } else {
+            <TaskListView />
+          }
+        </div>
+      </main>
+      if show_task_form {
+        <TaskForm />
+      }
+      if show_project_form {
+        <ProjectForm />
+      }
+    </div>
+  }
+}
