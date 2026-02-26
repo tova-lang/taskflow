@@ -13,12 +13,6 @@ Install Bun:
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Clone and set up the Tova compiler:
-
-```bash
-git clone https://github.com/paiml/tova-lang.git
-cd tova-lang
-```
 
 ## Quick Start
 

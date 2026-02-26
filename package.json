@@ -7,6 +7,6 @@
     "build": "tova build src"
   },
   "dependencies": {
-    "tova": "^0.1.0"
+    "tova": "^0.6.0"
   }
 }

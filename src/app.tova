@@ -267,11 +267,11 @@ browser {
 
   fn status_badge_class(st) {
     match st {
-      "backlog"     => "bg-gray-100 text-gray-600"
-      "todo"        => "bg-blue-100 text-blue-700"
-      "in_progress" => "bg-amber-100 text-amber-700"
-      "done"        => "bg-green-100 text-green-700"
-      _             => "bg-gray-100 text-gray-600"
+      "backlog"     => "bg-stone-100 text-stone-500"
+      "todo"        => "bg-sky-50 text-sky-600"
+      "in_progress" => "bg-amber-50 text-amber-600"
+      "done"        => "bg-emerald-50 text-emerald-600"
+      _             => "bg-stone-100 text-stone-500"
     }
   }
 
@@ -287,79 +287,79 @@ browser {
 
   fn priority_badge_class(pr) {
     match pr {
-      "urgent" => "bg-red-100 text-red-700 border border-red-200"
-      "high"   => "bg-orange-100 text-orange-700 border border-orange-200"
-      "medium" => "bg-amber-100 text-amber-700 border border-amber-200"
-      "low"    => "bg-green-100 text-green-700 border border-green-200"
-      _        => "bg-gray-100 text-gray-600"
+      "urgent" => "bg-rose-50 text-rose-600"
+      "high"   => "bg-orange-50 text-orange-600"
+      "medium" => "bg-amber-50 text-amber-600"
+      "low"    => "bg-emerald-50 text-emerald-600"
+      _        => "bg-stone-100 text-stone-500"
     }
   }
 
   fn status_circle_class(st) {
     match st {
-      "backlog"     => "border-gray-300 hover:border-gray-500"
-      "todo"        => "border-blue-400 hover:border-blue-600"
-      "in_progress" => "border-amber-400 hover:border-amber-600"
-      "done"        => "border-green-500 bg-green-500 hover:bg-green-600"
-      _             => "border-gray-300"
+      "backlog"     => "border-stone-300 hover:border-stone-400"
+      "todo"        => "border-sky-400 hover:border-sky-500"
+      "in_progress" => "border-amber-400 hover:border-amber-500"
+      "done"        => "border-emerald-500 bg-emerald-500 hover:bg-emerald-600 hover:border-emerald-600"
+      _             => "border-stone-300"
     }
   }
 
   // ── Components ───────────────────────────────────────
 
   component StatCard(label, value, color_class) {
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">"{label}"</p>
-      <p class="text-2xl font-bold mt-1 {color_class}">"{value}"</p>
+    <div class="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg {color_class}">
+      <p class="text-[11px] font-bold uppercase tracking-widest opacity-50">"{label}"</p>
+      <p style="font-family: 'Instrument Serif', serif" class="text-4xl mt-2 font-normal leading-none">"{value}"</p>
     </div>
   }
 
   component TaskCard(task) {
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all group {if is_overdue(task) { 'border-l-4 border-l-red-400' } else { '' }}">
-      <div class="flex items-start gap-3">
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 transition-all duration-200 hover:shadow-md hover:border-stone-200 group {if is_overdue(task) { 'border-l-4 border-l-rose-400' } else { '' }}">
+      <div class="flex items-start gap-3.5">
         <button
           on:click={fn() handle_status_toggle(task)}
-          class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors {status_circle_class(task.status)}"
+          class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-200 {status_circle_class(task.status)}"
         >
           if task.status == "done" {
-            <span class="text-white text-xs font-bold">"✓"</span>
+            <span class="text-white text-[10px] font-bold">"✓"</span>
           }
         </button>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <h3 class="font-medium text-gray-900 {if task.status == 'done' { 'line-through text-gray-400' } else { '' }}">"{task.title}"</h3>
-            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {status_badge_class(task.status)}">
+            <h3 class="font-semibold text-stone-800 {if task.status == 'done' { 'line-through text-stone-400 font-normal' } else { '' }}">"{task.title}"</h3>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {status_badge_class(task.status)}">
               "{status_label(task.status)}"
             </span>
-            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {priority_badge_class(task.priority)}">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {priority_badge_class(task.priority)}">
               "{task.priority}"
             </span>
           </div>
           if task.description != "" {
-            <p class="text-sm text-gray-500 mt-1">"{task.description}"</p>
+            <p class="text-sm text-stone-400 mt-1.5 leading-relaxed">"{task.description}"</p>
           }
-          <div class="flex items-center gap-3 mt-2">
+          <div class="flex items-center gap-3 mt-2.5">
             if task.project_id > 0 {
-              <span class="flex items-center gap-1 text-xs text-gray-400">
+              <span class="flex items-center gap-1.5 text-xs text-stone-400">
                 <span class="w-2 h-2 rounded-full inline-block" style="background:{get_project_color(task.project_id)}"></span>
                 "{get_project_name(task.project_id)}"
               </span>
             }
             if task.due_date != "" {
-              <span class="text-xs {if is_overdue(task) { 'text-red-500 font-medium' } else { 'text-gray-400' }}">
+              <span class="text-xs font-medium {if is_overdue(task) { 'text-rose-500' } else { 'text-stone-400' }}">
                 "{task.due_date}"
               </span>
             }
           </div>
         </div>
-        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
           <button
             on:click={fn() open_edit_task(task)}
-            class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm"
+            class="p-1.5 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg text-sm transition-colors duration-150"
           >"✎"</button>
           <button
             on:click={fn() handle_delete_task(task.id)}
-            class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-sm"
+            class="p-1.5 text-stone-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-sm transition-colors duration-150"
           >"✕"</button>
         </div>
       </div>
@@ -374,53 +374,61 @@ browser {
           placeholder="Search tasks..."
           value={search_query}
           on:input={fn(e) search_query = e.target.value}
-          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+          class="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 outline-none text-sm transition-all duration-200 placeholder:text-stone-400"
         />
       </div>
-      <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-        <button on:click={fn() filter_status = "all"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'all' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"All"</button>
-        <button on:click={fn() filter_status = "backlog"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'backlog' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Backlog"</button>
-        <button on:click={fn() filter_status = "todo"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'todo' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"To Do"</button>
-        <button on:click={fn() filter_status = "in_progress"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'in_progress' { 'bg-white text-amber-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Active"</button>
-        <button on:click={fn() filter_status = "done"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_status == 'done' { 'bg-white text-green-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Done"</button>
+      <div class="flex gap-0.5 bg-stone-100 p-1 rounded-xl">
+        <button on:click={fn() filter_status = "all"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'all' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"All"</button>
+        <button on:click={fn() filter_status = "backlog"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'backlog' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Backlog"</button>
+        <button on:click={fn() filter_status = "todo"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'todo' { 'bg-white text-sky-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"To Do"</button>
+        <button on:click={fn() filter_status = "in_progress"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'in_progress' { 'bg-white text-amber-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Active"</button>
+        <button on:click={fn() filter_status = "done"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'done' { 'bg-white text-emerald-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Done"</button>
       </div>
-      <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-        <button on:click={fn() filter_priority = "all"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'all' { 'bg-white text-gray-900 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Any"</button>
-        <button on:click={fn() filter_priority = "urgent"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'urgent' { 'bg-white text-red-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Urgent"</button>
-        <button on:click={fn() filter_priority = "high"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'high' { 'bg-white text-orange-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"High"</button>
-        <button on:click={fn() filter_priority = "medium"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'medium' { 'bg-white text-amber-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Med"</button>
-        <button on:click={fn() filter_priority = "low"} class="px-3 py-1.5 rounded-md text-xs font-medium {if filter_priority == 'low' { 'bg-white text-green-700 shadow-sm' } else { 'text-gray-500 hover:text-gray-700' }}">"Low"</button>
+      <div class="flex gap-0.5 bg-stone-100 p-1 rounded-xl">
+        <button on:click={fn() filter_priority = "all"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'all' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Any"</button>
+        <button on:click={fn() filter_priority = "urgent"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'urgent' { 'bg-white text-rose-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Urgent"</button>
+        <button on:click={fn() filter_priority = "high"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'high' { 'bg-white text-orange-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"High"</button>
+        <button on:click={fn() filter_priority = "medium"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'medium' { 'bg-white text-amber-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Med"</button>
+        <button on:click={fn() filter_priority = "low"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'low' { 'bg-white text-emerald-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Low"</button>
       </div>
     </div>
   }
 
   component Sidebar {
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
-      <div class="p-5 border-b border-gray-100">
-        <h1 class="text-xl font-bold text-gray-900">"TaskFlow"</h1>
-        <p class="text-xs text-gray-400 mt-0.5">"Manage your work"</p>
+    <aside class="w-64 bg-stone-900 flex flex-col h-screen fixed left-0 top-0">
+      <div class="p-5 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-orange-400 flex items-center justify-center shadow-lg shadow-rose-500/30">
+            <span class="text-white text-sm font-black">"T"</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-stone-100 tracking-tight">"TaskFlow"</h1>
+            <p class="text-[10px] text-stone-500 uppercase tracking-widest font-semibold">"Manage your work"</p>
+          </div>
+        </div>
       </div>
-      <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+      <div class="h-px bg-gradient-to-r from-transparent via-stone-700 to-transparent mx-4"></div>
+      <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto mt-2">
         <button
           on:click={navigate_dashboard}
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {if current_view == 'dashboard' { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {if current_view == 'dashboard' { 'bg-white/10 text-white' } else { 'text-stone-400 hover:text-stone-200 hover:bg-white/5' }}"
         >
           <span class="text-base">"◫"</span>
           "Dashboard"
         </button>
         <button
           on:click={navigate_all_tasks}
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {if current_view == 'all_tasks' { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {if current_view == 'all_tasks' { 'bg-white/10 text-white' } else { 'text-stone-400 hover:text-stone-200 hover:bg-white/5' }}"
         >
           <span class="text-base">"☰"</span>
           "All Tasks"
         </button>
-        <div class="pt-4 pb-2 px-3">
+        <div class="pt-5 pb-2 px-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">"Projects"</span>
+            <span class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">"Projects"</span>
             <button
               on:click={open_new_project}
-              class="text-gray-400 hover:text-indigo-600 text-lg leading-none"
+              class="w-5 h-5 flex items-center justify-center rounded-md text-stone-500 hover:text-rose-400 hover:bg-white/10 text-sm leading-none transition-all duration-200"
             >"+"</button>
           </div>
         </div>
@@ -428,63 +436,69 @@ browser {
           <div class="flex items-center group">
             <button
               on:click={fn() navigate_project(proj.id)}
-              class="flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors {if current_view == 'project' and current_project_id == proj.id { 'bg-indigo-50 text-indigo-700' } else { 'text-gray-600 hover:bg-gray-50' }}"
+              class="flex-1 flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 {if current_view == 'project' and current_project_id == proj.id { 'bg-white/10 text-white' } else { 'text-stone-400 hover:text-stone-200 hover:bg-white/5' }}"
             >
-              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:{proj.color}"></span>
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-white/10" style="background:{proj.color}"></span>
               <span class="flex-1 text-left truncate">"{proj.name}"</span>
-              <span class="text-xs text-gray-400">"{count_project_tasks(proj.id)}"</span>
+              <span class="text-[10px] font-semibold text-stone-500 bg-stone-800 px-1.5 py-0.5 rounded-md">"{count_project_tasks(proj.id)}"</span>
             </button>
             <button
               on:click={fn() open_edit_project(proj)}
-              class="p-1 text-gray-300 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="p-1 text-stone-600 hover:text-stone-300 opacity-0 group-hover:opacity-100 transition-all duration-200"
             >"✎"</button>
             <button
               on:click={fn() handle_delete_project(proj.id)}
-              class="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+              class="p-1 text-stone-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all duration-200 mr-1"
             >"✕"</button>
           </div>
         }
         if len(projects) == 0 {
-          <p class="px-3 py-2 text-xs text-gray-400">"No projects yet"</p>
+          <p class="px-3 py-4 text-xs text-stone-600 text-center">"No projects yet"</p>
         }
       </nav>
+      <div class="p-4 border-t border-stone-800/50">
+        <div class="flex items-center gap-2 px-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span class="text-[11px] text-stone-500 font-medium">"All systems online"</span>
+        </div>
+      </div>
     </aside>
   }
 
   component TaskForm {
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" on:click={reset_task_form}>
-      <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl mx-4" on:click={fn(e) e.stopPropagation()}>
-        <h2 class="text-lg font-semibold text-gray-900 mb-5">
+    <div class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm flex items-center justify-center z-50" on:click={reset_task_form}>
+      <div class="bg-white rounded-2xl p-7 w-full max-w-lg shadow-2xl mx-4 border border-stone-200/50" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-xl font-bold text-stone-900 mb-6">
           if editing_task_id > 0 { "Edit Task" } else { "New Task" }
         </h2>
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Title"</label>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Title"</label>
             <input
               type="text"
               placeholder="What needs to be done?"
               value={form_title}
               on:input={fn(e) form_title = e.target.value}
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Description"</label>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Description"</label>
             <input
               type="text"
               placeholder="Add some details..."
               value={form_description}
               on:input={fn(e) form_description = e.target.value}
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
             />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">"Project"</label>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Project"</label>
               <select
                 value={form_project_id}
                 on:change={fn(e) form_project_id = to_int(e.target.value)}
-                class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
               >
                 <option value="0">"No Project"</option>
                 for proj in projects {
@@ -493,43 +507,43 @@ browser {
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">"Due Date"</label>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Due Date"</label>
               <input
                 type="date"
                 value={form_due_date}
                 on:input={fn(e) form_due_date = e.target.value}
-                class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Status"</label>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Status"</label>
             <div class="flex gap-2">
-              <button on:click={fn() form_status = "backlog"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'backlog' { 'bg-gray-200 text-gray-800 border-gray-300' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Backlog"</button>
-              <button on:click={fn() form_status = "todo"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'todo' { 'bg-blue-100 text-blue-700 border-blue-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"To Do"</button>
-              <button on:click={fn() form_status = "in_progress"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'in_progress' { 'bg-amber-100 text-amber-700 border-amber-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Active"</button>
-              <button on:click={fn() form_status = "done"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_status == 'done' { 'bg-green-100 text-green-700 border-green-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Done"</button>
+              <button on:click={fn() form_status = "backlog"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'backlog' { 'bg-stone-800 text-white border-stone-800' } else { 'bg-white text-stone-500 border-stone-200 hover:border-stone-300' }}">"Backlog"</button>
+              <button on:click={fn() form_status = "todo"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'todo' { 'bg-sky-500 text-white border-sky-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-sky-300' }}">"To Do"</button>
+              <button on:click={fn() form_status = "in_progress"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'in_progress' { 'bg-amber-500 text-white border-amber-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-amber-300' }}">"Active"</button>
+              <button on:click={fn() form_status = "done"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'done' { 'bg-emerald-500 text-white border-emerald-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300' }}">"Done"</button>
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Priority"</label>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Priority"</label>
             <div class="flex gap-2">
-              <button on:click={fn() form_priority = "low"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'low' { 'bg-green-100 text-green-700 border-green-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Low"</button>
-              <button on:click={fn() form_priority = "medium"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'medium' { 'bg-amber-100 text-amber-700 border-amber-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Medium"</button>
-              <button on:click={fn() form_priority = "high"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'high' { 'bg-orange-100 text-orange-700 border-orange-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"High"</button>
-              <button on:click={fn() form_priority = "urgent"} class="px-3 py-1.5 rounded-lg text-sm font-medium border {if form_priority == 'urgent' { 'bg-red-100 text-red-700 border-red-200' } else { 'bg-gray-50 text-gray-500 border-gray-200' }}">"Urgent"</button>
+              <button on:click={fn() form_priority = "low"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'low' { 'bg-emerald-500 text-white border-emerald-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300' }}">"Low"</button>
+              <button on:click={fn() form_priority = "medium"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'medium' { 'bg-amber-500 text-white border-amber-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-amber-300' }}">"Medium"</button>
+              <button on:click={fn() form_priority = "high"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'high' { 'bg-orange-500 text-white border-orange-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-orange-300' }}">"High"</button>
+              <button on:click={fn() form_priority = "urgent"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'urgent' { 'bg-rose-500 text-white border-rose-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-rose-300' }}">"Urgent"</button>
             </div>
           </div>
-          <div class="flex gap-3 pt-2">
+          <div class="flex gap-3 pt-3">
             <button
               on:click={handle_task_submit}
-              class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm"
+              class="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm"
             >
               if editing_task_id > 0 { "Update Task" } else { "Add Task" }
             </button>
             <button
               on:click={reset_task_form}
-              class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200"
+              class="px-6 py-2.5 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition-all duration-200 text-sm"
             >"Cancel"</button>
           </div>
         </div>
@@ -538,45 +552,45 @@ browser {
   }
 
   component ProjectForm {
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" on:click={reset_project_form}>
-      <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl mx-4" on:click={fn(e) e.stopPropagation()}>
-        <h2 class="text-lg font-semibold text-gray-900 mb-5">
+    <div class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm flex items-center justify-center z-50" on:click={reset_project_form}>
+      <div class="bg-white rounded-2xl p-7 w-full max-w-sm shadow-2xl mx-4 border border-stone-200/50" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-xl font-bold text-stone-900 mb-6">
           if editing_project_id > 0 { "Edit Project" } else { "New Project" }
         </h2>
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Name"</label>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Name"</label>
             <input
               type="text"
               placeholder="Project name..."
               value={project_form_name}
               on:input={fn(e) project_form_name = e.target.value}
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">"Color"</label>
-            <div class="flex gap-2 flex-wrap">
-              <button on:click={fn() project_form_color = "#6366f1"} class="w-8 h-8 rounded-full bg-indigo-500 {if project_form_color == '#6366f1' { 'ring-2 ring-offset-2 ring-indigo-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#ef4444"} class="w-8 h-8 rounded-full bg-red-500 {if project_form_color == '#ef4444' { 'ring-2 ring-offset-2 ring-red-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#f59e0b"} class="w-8 h-8 rounded-full bg-amber-500 {if project_form_color == '#f59e0b' { 'ring-2 ring-offset-2 ring-amber-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#22c55e"} class="w-8 h-8 rounded-full bg-green-500 {if project_form_color == '#22c55e' { 'ring-2 ring-offset-2 ring-green-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#3b82f6"} class="w-8 h-8 rounded-full bg-blue-500 {if project_form_color == '#3b82f6' { 'ring-2 ring-offset-2 ring-blue-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#ec4899"} class="w-8 h-8 rounded-full bg-pink-500 {if project_form_color == '#ec4899' { 'ring-2 ring-offset-2 ring-pink-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#8b5cf6"} class="w-8 h-8 rounded-full bg-violet-500 {if project_form_color == '#8b5cf6' { 'ring-2 ring-offset-2 ring-violet-500' } else { '' }}"></button>
-              <button on:click={fn() project_form_color = "#14b8a6"} class="w-8 h-8 rounded-full bg-teal-500 {if project_form_color == '#14b8a6' { 'ring-2 ring-offset-2 ring-teal-500' } else { '' }}"></button>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Color"</label>
+            <div class="flex gap-3 flex-wrap">
+              <button on:click={fn() project_form_color = "#6366f1"} class="w-9 h-9 rounded-full bg-indigo-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#6366f1' { 'ring-2 ring-offset-2 ring-indigo-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ef4444"} class="w-9 h-9 rounded-full bg-red-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#ef4444' { 'ring-2 ring-offset-2 ring-red-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#f59e0b"} class="w-9 h-9 rounded-full bg-amber-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#f59e0b' { 'ring-2 ring-offset-2 ring-amber-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#22c55e"} class="w-9 h-9 rounded-full bg-green-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#22c55e' { 'ring-2 ring-offset-2 ring-green-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#3b82f6"} class="w-9 h-9 rounded-full bg-blue-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#3b82f6' { 'ring-2 ring-offset-2 ring-blue-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ec4899"} class="w-9 h-9 rounded-full bg-pink-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#ec4899' { 'ring-2 ring-offset-2 ring-pink-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#8b5cf6"} class="w-9 h-9 rounded-full bg-violet-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#8b5cf6' { 'ring-2 ring-offset-2 ring-violet-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#14b8a6"} class="w-9 h-9 rounded-full bg-teal-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#14b8a6' { 'ring-2 ring-offset-2 ring-teal-500 scale-110' } else { '' }}"></button>
             </div>
           </div>
-          <div class="flex gap-3 pt-2">
+          <div class="flex gap-3 pt-3">
             <button
               on:click={handle_project_submit}
-              class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm"
+              class="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm"
             >
               if editing_project_id > 0 { "Update" } else { "Create Project" }
             </button>
             <button
               on:click={reset_project_form}
-              class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200"
+              class="px-6 py-2.5 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition-all duration-200 text-sm"
             >"Cancel"</button>
           </div>
         </div>
@@ -586,30 +600,31 @@ browser {
 
   component DashboardView {
     <div>
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-8">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900">"Dashboard"</h2>
-          <p class="text-sm text-gray-500 mt-0.5">"Overview of all your work"</p>
+          <h2 class="text-3xl font-bold text-stone-900 tracking-tight">"Dashboard"</h2>
+          <p class="text-sm text-stone-400 mt-1">"Overview of all your work"</p>
         </div>
         <button
           on:click={open_new_task}
-          class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm text-sm"
+          class="px-5 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm active:scale-95"
         >"+ New Task"</button>
       </div>
-      <div class="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Tasks" value={stats.total} color_class="text-gray-900" />
-        <StatCard label="In Progress" value={stats.in_progress} color_class="text-amber-600" />
-        <StatCard label="Completed" value={stats.done} color_class="text-green-600" />
-        <StatCard label="Overdue" value={stats.overdue} color_class="text-red-600" />
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total Tasks" value={stats.total} color_class="bg-white border border-stone-200/80 text-stone-800 shadow-sm" />
+        <StatCard label="In Progress" value={stats.in_progress} color_class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/40 text-amber-800" />
+        <StatCard label="Completed" value={stats.done} color_class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/40 text-emerald-800" />
+        <StatCard label="Overdue" value={stats.overdue} color_class="bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200/40 text-rose-800" />
       </div>
-      <div class="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Backlog" value={stats.backlog} color_class="text-gray-500" />
-        <StatCard label="To Do" value={stats.todo} color_class="text-blue-600" />
-        <StatCard label="High Priority" value={stats.high} color_class="text-orange-600" />
-        <StatCard label="Urgent" value={stats.urgent} color_class="text-red-600" />
+      <div class="grid grid-cols-4 gap-4 mb-10">
+        <StatCard label="Backlog" value={stats.backlog} color_class="bg-stone-50 border border-stone-200/50 text-stone-600" />
+        <StatCard label="To Do" value={stats.todo} color_class="bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200/40 text-sky-800" />
+        <StatCard label="High Priority" value={stats.high} color_class="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/40 text-orange-800" />
+        <StatCard label="Urgent" value={stats.urgent} color_class="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/40 text-red-800" />
       </div>
-      <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">"Recent Tasks"</h3>
+      <div class="flex items-center gap-3 mb-5">
+        <h3 class="text-lg font-bold text-stone-900">"Recent Tasks"</h3>
+        <div class="flex-1 h-px bg-stone-200"></div>
       </div>
       for task in tasks.slice(0, 5) {
         <div class="mb-3">
@@ -617,8 +632,9 @@ browser {
         </div>
       }
       if len(tasks) == 0 {
-        <div class="text-center py-12 bg-white rounded-xl border border-gray-100">
-          <p class="text-gray-400 text-sm">"No tasks yet. Create your first task to get started."</p>
+        <div class="text-center py-16 bg-white rounded-2xl border border-stone-100 shadow-sm">
+          <p class="text-3xl mb-3">"✨"</p>
+          <p class="text-stone-500 text-sm font-medium">"No tasks yet. Create your first task to get started."</p>
         </div>
       }
     </div>
@@ -626,25 +642,25 @@ browser {
 
   component TaskListView {
     <div>
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-8">
         <div>
           if current_view == "project" and current_project_id > 0 {
-            <h2 class="text-2xl font-bold text-gray-900">"{get_project_name(current_project_id)}"</h2>
+            <h2 class="text-3xl font-bold text-stone-900 tracking-tight">"{get_project_name(current_project_id)}"</h2>
           } else {
-            <h2 class="text-2xl font-bold text-gray-900">"All Tasks"</h2>
+            <h2 class="text-3xl font-bold text-stone-900 tracking-tight">"All Tasks"</h2>
           }
-          <p class="text-sm text-gray-500 mt-0.5">"{len(get_filtered_tasks())} tasks"</p>
+          <p class="text-sm text-stone-400 mt-1">"{len(get_filtered_tasks())} tasks"</p>
         </div>
         <div class="flex gap-2">
           if current_view == "project" and current_project_id > 0 {
             <button
               on:click={handle_mark_all_done}
-              class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200 text-sm"
+              class="px-4 py-2.5 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 text-sm transition-all duration-200"
             >"Mark All Done"</button>
           }
           <button
             on:click={open_new_task}
-            class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm text-sm"
+            class="px-5 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm active:scale-95"
           >"+ New Task"</button>
         </div>
       </div>
@@ -658,16 +674,17 @@ browser {
       }
 
       if len(get_filtered_tasks()) == 0 {
-        <div class="text-center py-12 bg-white rounded-xl border border-gray-100">
-          <p class="text-gray-400 text-sm">"No tasks match your filters."</p>
+        <div class="text-center py-16 bg-white rounded-2xl border border-stone-100 shadow-sm">
+          <p class="text-3xl mb-3">"🔍"</p>
+          <p class="text-stone-500 text-sm font-medium">"No tasks match your filters."</p>
         </div>
       }
 
       if stats.done > 0 {
-        <div class="mt-6 text-center">
+        <div class="mt-8 text-center">
           <button
             on:click={handle_clear_completed}
-            class="text-sm text-red-500 hover:text-red-700 font-medium"
+            class="text-sm text-stone-400 hover:text-rose-500 font-semibold transition-colors duration-200"
           >"Clear completed tasks"</button>
         </div>
       }
@@ -675,9 +692,11 @@ browser {
   }
 
   component App {
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+    <div style="font-family: 'Outfit', system-ui, -apple-system, sans-serif" class="min-h-screen bg-gradient-to-br from-stone-50 via-white to-orange-50/30">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" />
       <Sidebar />
-      <main class="ml-64 p-8">
+      <main class="ml-64 p-8 min-h-screen">
         <div class="max-w-4xl mx-auto">
           if current_view == "dashboard" {
             <DashboardView />
