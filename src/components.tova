@@ -1,0 +1,90 @@
+// TaskFlow — Reusable Components: StatCard, TaskCard, FilterBar
+
+browser {
+  component StatCard(label, value, color_class) {
+    <div class="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg {color_class}">
+      <p class="text-[11px] font-bold uppercase tracking-widest opacity-50">"{label}"</p>
+      <p style="font-family: 'Instrument Serif', serif" class="text-4xl mt-2 font-normal leading-none">"{value}"</p>
+    </div>
+  }
+
+  component TaskCard(task) {
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 transition-all duration-200 hover:shadow-md hover:border-stone-200 group {if is_overdue(task) { 'border-l-4 border-l-rose-400' } else { '' }}">
+      <div class="flex items-start gap-3.5">
+        <button
+          on:click={fn() handle_status_toggle(task)}
+          class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-200 {status_circle_class(task.status)}"
+        >
+          if task.status == "done" {
+            <span class="text-white text-[10px] font-bold">"✓"</span>
+          }
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="font-semibold text-stone-800 {if task.status == 'done' { 'line-through text-stone-400 font-normal' } else { '' }}">"{task.title}"</h3>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {status_badge_class(task.status)}">
+              "{status_label(task.status)}"
+            </span>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {priority_badge_class(task.priority)}">
+              "{task.priority}"
+            </span>
+          </div>
+          if task.description != "" {
+            <p class="text-sm text-stone-400 mt-1.5 leading-relaxed">"{task.description}"</p>
+          }
+          <div class="flex items-center gap-3 mt-2.5">
+            if task.project_id > 0 {
+              <span class="flex items-center gap-1.5 text-xs text-stone-400">
+                <span class="w-2 h-2 rounded-full inline-block" style="background:{get_project_color(task.project_id)}"></span>
+                "{get_project_name(task.project_id)}"
+              </span>
+            }
+            if task.due_date != "" {
+              <span class="text-xs font-medium {if is_overdue(task) { 'text-rose-500' } else { 'text-stone-400' }}">
+                "{task.due_date}"
+              </span>
+            }
+          </div>
+        </div>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+          <button
+            on:click={fn() open_edit_task(task)}
+            class="p-1.5 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg text-sm transition-colors duration-150"
+          >"✎"</button>
+          <button
+            on:click={fn() handle_delete_task(task.id)}
+            class="p-1.5 text-stone-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-sm transition-colors duration-150"
+          >"✕"</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  component FilterBar {
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="flex-1 min-w-48">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={search_query}
+          on:input={fn(e) search_query = e.target.value}
+          class="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 outline-none text-sm transition-all duration-200 placeholder:text-stone-400"
+        />
+      </div>
+      <div class="flex gap-0.5 bg-stone-100 p-1 rounded-xl">
+        <button on:click={fn() filter_status = "all"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'all' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"All"</button>
+        <button on:click={fn() filter_status = "backlog"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'backlog' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Backlog"</button>
+        <button on:click={fn() filter_status = "todo"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'todo' { 'bg-white text-sky-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"To Do"</button>
+        <button on:click={fn() filter_status = "in_progress"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'in_progress' { 'bg-white text-amber-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Active"</button>
+        <button on:click={fn() filter_status = "done"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_status == 'done' { 'bg-white text-emerald-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Done"</button>
+      </div>
+      <div class="flex gap-0.5 bg-stone-100 p-1 rounded-xl">
+        <button on:click={fn() filter_priority = "all"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'all' { 'bg-white text-stone-800 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Any"</button>
+        <button on:click={fn() filter_priority = "urgent"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'urgent' { 'bg-white text-rose-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Urgent"</button>
+        <button on:click={fn() filter_priority = "high"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'high' { 'bg-white text-orange-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"High"</button>
+        <button on:click={fn() filter_priority = "medium"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'medium' { 'bg-white text-amber-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Med"</button>
+        <button on:click={fn() filter_priority = "low"} class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {if filter_priority == 'low' { 'bg-white text-emerald-600 shadow-sm' } else { 'text-stone-500 hover:text-stone-700' }}">"Low"</button>
+      </div>
+    </div>
+  }
+}

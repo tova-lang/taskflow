@@ -1,0 +1,136 @@
+// TaskFlow — Modal Forms: TaskForm & ProjectForm
+
+browser {
+  component TaskForm {
+    <div class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm flex items-center justify-center z-50" on:click={reset_task_form}>
+      <div class="bg-white rounded-2xl p-7 w-full max-w-lg shadow-2xl mx-4 border border-stone-200/50" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-xl font-bold text-stone-900 mb-6">
+          if editing_task_id > 0 { "Edit Task" } else { "New Task" }
+        </h2>
+        <div class="space-y-5">
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Title"</label>
+            <input
+              type="text"
+              placeholder="What needs to be done?"
+              value={form_title}
+              on:input={fn(e) form_title = e.target.value}
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Description"</label>
+            <input
+              type="text"
+              placeholder="Add some details..."
+              value={form_description}
+              on:input={fn(e) form_description = e.target.value}
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Project"</label>
+              <select
+                value={form_project_id}
+                on:change={fn(e) form_project_id = to_int(e.target.value)}
+                class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
+              >
+                <option value="0">"No Project"</option>
+                for proj in projects {
+                  <option value={proj.id}>"{proj.name}"</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Due Date"</label>
+              <input
+                type="date"
+                value={form_due_date}
+                on:input={fn(e) form_due_date = e.target.value}
+                class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Status"</label>
+            <div class="flex gap-2">
+              <button on:click={fn() form_status = "backlog"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'backlog' { 'bg-stone-800 text-white border-stone-800' } else { 'bg-white text-stone-500 border-stone-200 hover:border-stone-300' }}">"Backlog"</button>
+              <button on:click={fn() form_status = "todo"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'todo' { 'bg-sky-500 text-white border-sky-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-sky-300' }}">"To Do"</button>
+              <button on:click={fn() form_status = "in_progress"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'in_progress' { 'bg-amber-500 text-white border-amber-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-amber-300' }}">"Active"</button>
+              <button on:click={fn() form_status = "done"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_status == 'done' { 'bg-emerald-500 text-white border-emerald-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300' }}">"Done"</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Priority"</label>
+            <div class="flex gap-2">
+              <button on:click={fn() form_priority = "low"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'low' { 'bg-emerald-500 text-white border-emerald-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300' }}">"Low"</button>
+              <button on:click={fn() form_priority = "medium"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'medium' { 'bg-amber-500 text-white border-amber-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-amber-300' }}">"Medium"</button>
+              <button on:click={fn() form_priority = "high"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'high' { 'bg-orange-500 text-white border-orange-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-orange-300' }}">"High"</button>
+              <button on:click={fn() form_priority = "urgent"} class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 {if form_priority == 'urgent' { 'bg-rose-500 text-white border-rose-500' } else { 'bg-white text-stone-500 border-stone-200 hover:border-rose-300' }}">"Urgent"</button>
+            </div>
+          </div>
+          <div class="flex gap-3 pt-3">
+            <button
+              on:click={handle_task_submit}
+              class="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm"
+            >
+              if editing_task_id > 0 { "Update Task" } else { "Add Task" }
+            </button>
+            <button
+              on:click={reset_task_form}
+              class="px-6 py-2.5 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition-all duration-200 text-sm"
+            >"Cancel"</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  component ProjectForm {
+    <div class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm flex items-center justify-center z-50" on:click={reset_project_form}>
+      <div class="bg-white rounded-2xl p-7 w-full max-w-sm shadow-2xl mx-4 border border-stone-200/50" on:click={fn(e) e.stopPropagation()}>
+        <h2 class="text-xl font-bold text-stone-900 mb-6">
+          if editing_project_id > 0 { "Edit Project" } else { "New Project" }
+        </h2>
+        <div class="space-y-5">
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Name"</label>
+            <input
+              type="text"
+              placeholder="Project name..."
+              value={project_form_name}
+              on:input={fn(e) project_form_name = e.target.value}
+              class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-300 focus:bg-white outline-none text-sm transition-all duration-200"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">"Color"</label>
+            <div class="flex gap-3 flex-wrap">
+              <button on:click={fn() project_form_color = "#6366f1"} class="w-9 h-9 rounded-full bg-indigo-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#6366f1' { 'ring-2 ring-offset-2 ring-indigo-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ef4444"} class="w-9 h-9 rounded-full bg-red-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#ef4444' { 'ring-2 ring-offset-2 ring-red-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#f59e0b"} class="w-9 h-9 rounded-full bg-amber-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#f59e0b' { 'ring-2 ring-offset-2 ring-amber-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#22c55e"} class="w-9 h-9 rounded-full bg-green-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#22c55e' { 'ring-2 ring-offset-2 ring-green-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#3b82f6"} class="w-9 h-9 rounded-full bg-blue-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#3b82f6' { 'ring-2 ring-offset-2 ring-blue-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#ec4899"} class="w-9 h-9 rounded-full bg-pink-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#ec4899' { 'ring-2 ring-offset-2 ring-pink-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#8b5cf6"} class="w-9 h-9 rounded-full bg-violet-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#8b5cf6' { 'ring-2 ring-offset-2 ring-violet-500 scale-110' } else { '' }}"></button>
+              <button on:click={fn() project_form_color = "#14b8a6"} class="w-9 h-9 rounded-full bg-teal-500 transition-all duration-200 hover:scale-110 {if project_form_color == '#14b8a6' { 'ring-2 ring-offset-2 ring-teal-500 scale-110' } else { '' }}"></button>
+            </div>
+          </div>
+          <div class="flex gap-3 pt-3">
+            <button
+              on:click={handle_project_submit}
+              class="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl font-semibold hover:from-rose-600 hover:to-orange-600 shadow-lg shadow-rose-500/25 transition-all duration-200 text-sm"
+            >
+              if editing_project_id > 0 { "Update" } else { "Create Project" }
+            </button>
+            <button
+              on:click={reset_project_form}
+              class="px-6 py-2.5 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition-all duration-200 text-sm"
+            >"Cancel"</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}

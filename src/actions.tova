@@ -1,0 +1,258 @@
+// TaskFlow — Actions: Form Helpers, Navigation, Filtering, Styles
+
+browser {
+  // ── Task Form Helpers ────────────────────────────────
+
+  fn reset_task_form() {
+    form_title = ""
+    form_description = ""
+    form_status = "todo"
+    form_priority = "medium"
+    form_project_id = 0
+    form_due_date = ""
+    editing_task_id = 0
+    show_task_form = false
+  }
+
+  fn open_new_task() {
+    reset_task_form()
+    if current_view == "project" and current_project_id > 0 {
+      form_project_id = current_project_id
+    }
+    show_task_form = true
+  }
+
+  fn open_edit_task(task) {
+    form_title = task.title
+    form_description = task.description
+    form_status = task.status
+    form_priority = task.priority
+    form_project_id = task.project_id
+    form_due_date = task.due_date
+    editing_task_id = task.id
+    show_task_form = true
+  }
+
+  fn handle_task_submit() {
+    if form_title != "" {
+      if editing_task_id > 0 {
+        server.update_task(editing_task_id, form_project_id, form_title, form_description, form_status, form_priority, form_due_date)
+      } else {
+        server.create_task(form_project_id, form_title, form_description, form_status, form_priority, form_due_date)
+      }
+      reset_task_form()
+      refresh_tasks()
+    }
+  }
+
+  fn handle_status_toggle(task) {
+    next = match task.status {
+      "backlog" => "todo"
+      "todo" => "in_progress"
+      "in_progress" => "done"
+      "done" => "backlog"
+      _ => "todo"
+    }
+    server.update_task_status(task.id, next)
+    refresh_tasks()
+  }
+
+  fn handle_delete_task(id) {
+    server.delete_task(id)
+    refresh_tasks()
+  }
+
+  fn handle_clear_completed() {
+    server.delete_completed_tasks()
+    refresh_tasks()
+  }
+
+  fn handle_mark_all_done() {
+    if current_project_id > 0 {
+      server.mark_all_done(current_project_id)
+      refresh_tasks()
+    }
+  }
+
+  // ── Project Form Helpers ─────────────────────────────
+
+  fn reset_project_form() {
+    project_form_name = ""
+    project_form_color = "#6366f1"
+    editing_project_id = 0
+    show_project_form = false
+  }
+
+  fn open_new_project() {
+    reset_project_form()
+    show_project_form = true
+  }
+
+  fn open_edit_project(proj) {
+    project_form_name = proj.name
+    project_form_color = proj.color
+    editing_project_id = proj.id
+    show_project_form = true
+  }
+
+  fn handle_project_submit() {
+    if project_form_name != "" {
+      if editing_project_id > 0 {
+        server.update_project(editing_project_id, project_form_name, project_form_color, "")
+      } else {
+        server.create_project(project_form_name, project_form_color, "")
+      }
+      reset_project_form()
+      refresh_all()
+    }
+  }
+
+  fn handle_delete_project(id) {
+    server.delete_project(id)
+    if current_project_id == id {
+      current_view = "dashboard"
+      current_project_id = 0
+    }
+    refresh_all()
+  }
+
+  // ── Navigation ───────────────────────────────────────
+
+  fn navigate_dashboard() {
+    current_view = "dashboard"
+    current_project_id = 0
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  fn navigate_all_tasks() {
+    current_view = "all_tasks"
+    current_project_id = 0
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  fn navigate_project(id) {
+    current_view = "project"
+    current_project_id = id
+    filter_status = "all"
+    filter_priority = "all"
+    search_query = ""
+  }
+
+  // ── Filtering & Lookup ───────────────────────────────
+
+  fn get_project_name(pid) {
+    for p in projects {
+      if p.id == pid {
+        return p.name
+      }
+    }
+    "No Project"
+  }
+
+  fn get_project_color(pid) {
+    for p in projects {
+      if p.id == pid {
+        return p.color
+      }
+    }
+    "#9ca3af"
+  }
+
+  fn count_project_tasks(pid) {
+    len([t for t in tasks if t.project_id == pid and t.status != "done"])
+  }
+
+  fn is_overdue(task) {
+    if task.due_date == "" or task.status == "done" {
+      return false
+    }
+    today = Date.new().toISOString().slice(0, 10)
+    due = task.due_date
+    due < today
+  }
+
+  fn get_filtered_tasks() {
+    base = if current_view == "project" and current_project_id > 0 {
+      [t for t in tasks if t.project_id == current_project_id]
+    } else {
+      tasks
+    }
+    filtered = if filter_status == "all" {
+      base
+    } elif filter_status == "backlog" {
+      [t for t in base if t.status == "backlog"]
+    } elif filter_status == "todo" {
+      [t for t in base if t.status == "todo"]
+    } elif filter_status == "in_progress" {
+      [t for t in base if t.status == "in_progress"]
+    } elif filter_status == "done" {
+      [t for t in base if t.status == "done"]
+    } else {
+      base
+    }
+    filtered2 = if filter_priority == "all" {
+      filtered
+    } elif filter_priority == "urgent" {
+      [t for t in filtered if t.priority == "urgent"]
+    } elif filter_priority == "high" {
+      [t for t in filtered if t.priority == "high"]
+    } elif filter_priority == "medium" {
+      [t for t in filtered if t.priority == "medium"]
+    } elif filter_priority == "low" {
+      [t for t in filtered if t.priority == "low"]
+    } else {
+      filtered
+    }
+    if search_query == "" {
+      filtered2
+    } else {
+      [t for t in filtered2 if t.title.toLowerCase().includes(search_query.toLowerCase()) or t.description.toLowerCase().includes(search_query.toLowerCase())]
+    }
+  }
+
+  // ── Style Helpers ────────────────────────────────────
+
+  fn status_badge_class(st) {
+    match st {
+      "backlog"     => "bg-stone-100 text-stone-500"
+      "todo"        => "bg-sky-50 text-sky-600"
+      "in_progress" => "bg-amber-50 text-amber-600"
+      "done"        => "bg-emerald-50 text-emerald-600"
+      _             => "bg-stone-100 text-stone-500"
+    }
+  }
+
+  fn status_label(st) {
+    match st {
+      "backlog"     => "Backlog"
+      "todo"        => "To Do"
+      "in_progress" => "Active"
+      "done"        => "Done"
+      _             => st
+    }
+  }
+
+  fn priority_badge_class(pr) {
+    match pr {
+      "urgent" => "bg-rose-50 text-rose-600"
+      "high"   => "bg-orange-50 text-orange-600"
+      "medium" => "bg-amber-50 text-amber-600"
+      "low"    => "bg-emerald-50 text-emerald-600"
+      _        => "bg-stone-100 text-stone-500"
+    }
+  }
+
+  fn status_circle_class(st) {
+    match st {
+      "backlog"     => "border-stone-300 hover:border-stone-400"
+      "todo"        => "border-sky-400 hover:border-sky-500"
+      "in_progress" => "border-amber-400 hover:border-amber-500"
+      "done"        => "border-emerald-500 bg-emerald-500 hover:bg-emerald-600 hover:border-emerald-600"
+      _             => "border-stone-300"
+    }
+  }
+}

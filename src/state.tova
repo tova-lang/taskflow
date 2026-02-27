@@ -1,0 +1,52 @@
+// TaskFlow — Reactive State & Data Loading
+
+browser {
+  // ── Data State ───────────────────────────────────────
+  state projects = []
+  state tasks = []
+  state stats = { total: 0, backlog: 0, todo: 0, in_progress: 0, done: 0, high: 0, urgent: 0, overdue: 0 }
+
+  // ── Navigation ───────────────────────────────────────
+  state current_view = "dashboard"
+  state current_project_id = 0
+
+  // ── Filters ──────────────────────────────────────────
+  state search_query = ""
+  state filter_status = "all"
+  state filter_priority = "all"
+  state sort_by = "newest"
+
+  // ── Task Form ────────────────────────────────────────
+  state show_task_form = false
+  state editing_task_id = 0
+  state form_title = ""
+  state form_description = ""
+  state form_status = "todo"
+  state form_priority = "medium"
+  state form_project_id = 0
+  state form_due_date = ""
+
+  // ── Project Form ─────────────────────────────────────
+  state show_project_form = false
+  state editing_project_id = 0
+  state project_form_name = ""
+  state project_form_color = "#6366f1"
+
+  // ── Load on mount ────────────────────────────────────
+  effect {
+    projects = server.list_projects()
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+
+  fn refresh_all() {
+    projects = server.list_projects()
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+
+  fn refresh_tasks() {
+    tasks = server.list_tasks()
+    stats = server.get_stats()
+  }
+}
